@@ -33,6 +33,9 @@ public:
 			{
 				_remainBytes = 128 * 1024;
 				//_memory = (char*)malloc(_remainBytes);
+				//这里规定1页为8KB，1 页 = 8 KB = 8192 字节 = 2^13 字节
+				// 这里将剩余字节数转换为页数，右移 13 位就是除以 2^13，也就是除以 8192
+				//向系统申请 16 页内存，每页 8 KB，总共 128 KB。
 				_memory = (char*)SystemAlloc(_remainBytes >> 13);
 				if (_memory == nullptr)
 				{
@@ -41,6 +44,8 @@ public:
 			}
 
 			obj = (T*)_memory;
+			//原因在于对象释放回对象池时，`Delete` 会把该对象原本占用的内存块，临时拿来存储“下一个空闲块”的地址：
+			//所以这里需要保证每个对象的大小至少能存储一个指针的大小
 			size_t objSize = sizeof(T) < sizeof(void*) ? sizeof(void*) : sizeof(T);
 			_memory += objSize;
 			_remainBytes -= objSize;
@@ -58,6 +63,9 @@ public:
 		obj->~T();
 
 		// 头插
+		//obj被强转成void**,然后再解引用，获得void*类型的指针，指向下一个空闲内存块
+		//void*32位系统下是4字节，64位系统下是8字节，保证每个空闲内存块至少能存储一个指针的大小
+		//这样在New函数中可以通过_freeList获取下一个空闲内存块的指针，实现内存块的复用
 		*(void**)obj = _freeList;
 		_freeList = obj;
 	}

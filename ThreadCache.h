@@ -19,4 +19,4 @@ private:
 };
 
 // TLS thread local storage
-static _declspec(thread) ThreadCache* pTLSThreadCache = nullptr;
+inline thread_local ThreadCache* pTLSThreadCache = nullptr;

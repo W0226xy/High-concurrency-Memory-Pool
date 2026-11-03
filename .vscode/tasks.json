@@ -1,0 +1,33 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "C/C++: 构建内存池测试",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "-std=c++17",
+                "-pthread",
+                "${workspaceFolder}/UnitTest.cpp",
+                "${workspaceFolder}/ThreadCache.cpp",
+                "${workspaceFolder}/CentralCache.cpp",
+                "${workspaceFolder}/PageCache.cpp",
+                "-o",
+                "${workspaceFolder}/UnitTest.out"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "使用 g++ 构建完整的内存池测试程序。"
+        }
+    ],
+    "version": "2.0.0"
+}

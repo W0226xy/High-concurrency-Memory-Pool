@@ -10,7 +10,7 @@ Span* PageCache::NewSpan(size_t k)
 	// 先检查第k个桶里面有没有span
 	if (!_spanLists[k].Empty())
 	{
-		return _spanLists->PopFront();
+		return _spanLists[k].PopFront();
 	}
 
 	// 检查一下后面的桶里面有没有span，如果有可以把他它进行切分

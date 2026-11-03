@@ -8,7 +8,7 @@ void* ThreadCache::FetchFromCentralCache(size_t index, size_t size)
 	// 2、如果你不要这个size大小内存需求，那么batchNum就会不断增长，直到上限
 	// 3、size越大，一次向central cache要的batchNum就越小
 	// 4、size越小，一次向central cache要的batchNum就越大
-	size_t batchNum = min(_freeLists[index].MaxSize(), SizeClass::NumMoveSize(size));
+	size_t batchNum = std::min(_freeLists[index].MaxSize(), SizeClass::NumMoveSize(size));
 	if (_freeLists[index].MaxSize() == batchNum)
 	{
 		_freeLists[index].MaxSize() += 1;
@@ -34,8 +34,8 @@ void* ThreadCache::FetchFromCentralCache(size_t index, size_t size)
 void* ThreadCache::Allocate(size_t size)
 {
 	assert(size <= MAX_BYTES);
-	size_t alignSize = SizeClass::RoundUp(size);
-	size_t index = SizeClass::Index(size);
+	size_t alignSize = SizeClass::RoundUp(size);// 对齐后的大小
+	size_t index = SizeClass::Index(size);// 对应自由链表所在桶的索引
 
 	if (!_freeLists[index].Empty())
 	{
