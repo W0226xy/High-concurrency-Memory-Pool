@@ -1,23 +1,24 @@
 {
+    "version": "2.0.0",
     "tasks": [
         {
             "type": "cppbuild",
             "label": "C/C++: 构建内存池测试",
-            "command": "/usr/bin/g++",
+            "command": "D:\\w64devkit\\w64devkit\\bin\\g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
                 "-std=c++17",
                 "-pthread",
-                "${workspaceFolder}/UnitTest.cpp",
-                "${workspaceFolder}/ThreadCache.cpp",
-                "${workspaceFolder}/CentralCache.cpp",
-                "${workspaceFolder}/PageCache.cpp",
+                "${workspaceFolder}\\UnitTest.cpp",
+                "${workspaceFolder}\\ThreadCache.cpp",
+                "${workspaceFolder}\\CentralCache.cpp",
+                "${workspaceFolder}\\PageCache.cpp",
                 "-o",
-                "${workspaceFolder}/UnitTest.out"
+                "${workspaceFolder}\\UnitTest.exe"
             ],
             "options": {
-                "cwd": "${fileDirname}"
+                "cwd": "${workspaceFolder}"
             },
             "problemMatcher": [
                 "$gcc"
@@ -26,8 +27,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "detail": "使用 g++ 构建完整的内存池测试程序。"
+            "detail": "使用 Win64DevKit 构建内存池测试"
         }
-    ],
-    "version": "2.0.0"
+    ]
 }

@@ -13,7 +13,7 @@ Span* PageCache::NewSpan(size_t k)
 		return _spanLists[k].PopFront();
 	}
 
-	// 检查一下后面的桶里面有没有span，如果有可以把他它进行切分
+	// 检查一下后面的桶里面有没有span，如果有可以把它进行切分
 	for (size_t i = k+1; i < NPAGES; ++i)
 	{
 		if (!_spanLists[i].Empty())
@@ -22,14 +22,16 @@ Span* PageCache::NewSpan(size_t k)
 			Span* kSpan = new Span;
 
 			// 在nSpan的头部切一个k页下来
-			// k页span返回
-			// nSpan再挂到对应映射的位置
+			// k页span返回给centracache
+			// n-k页的Span再挂到对应映射的位置
 			kSpan->_pageId = nSpan->_pageId;
 			kSpan->_n = k;
 
 			nSpan->_pageId += k;
 			nSpan->_n -= k;
 
+
+			//切剩下的挂到pagecache对应页的桶上
 			_spanLists[nSpan->_n].PushFront(nSpan);
 			// 存储nSpan的首位页号跟nSpan映射，方便page cache回收内存时
 			// 进行的合并查找
@@ -47,15 +49,15 @@ Span* PageCache::NewSpan(size_t k)
 		}
 	}
 
-	// 走到这个位置就说明后面没有大页的span了
-	// 这时就去找堆要一个128页的span
+	// 走到这个位置就说明后面没有大页的span了，一般是刚开始的时候，pagecache还没有从堆上申请过span，或者是page cache里面的span都被central cache分配完了
 	Span* bigSpan = new Span;
+	// 这时就去找堆要一个128页的span，插入到128号桶
 	void* ptr = SystemAlloc(NPAGES - 1);
 	bigSpan->_pageId = (PAGE_ID)ptr >> PAGE_SHIFT;
 	bigSpan->_n = NPAGES - 1;
-
 	_spanLists[bigSpan->_n].PushFront(bigSpan);
 
+	//再递归调一次，前面的逻辑就会把128页的span切分成k页的span返回给central cache
 	return NewSpan(k);
 }
 

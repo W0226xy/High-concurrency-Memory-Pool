@@ -24,7 +24,7 @@ using std::endl;
 
 static const size_t MAX_BYTES = 256 * 1024;
 static const size_t NFREELIST = 208;//最多208个自由链表桶
-static const size_t NPAGES = 129;
+static const size_t NPAGES = 129;//PageCache最大的桶128page，从0号桶开始，_spanLists[k]存放k页的span，0号桶不存放span，1号桶存放1页的span，128号桶存放128页的span
 static const size_t PAGE_SHIFT = 13;// 每页8KB，2^13字节
 
 // PAGE_ID需要容纳指针转换后的整数，uintptr_t在32/64位平台上都适用。
@@ -334,16 +334,19 @@ public:
 		return num;
 	}
 
-	// 计算一次向系统获取几个页
+	// PageCache计算一次向系统获取几个页
 	// 单个对象 8byte
 	// ...
 	// 单个对象 256KB
 	static size_t NumMovePage(size_t size)
 	{
+		//该size大小的对象，threadCache一次性向centralCache要多少个。走到这个函数说明centralcache中没有对应大小的span可供切割了，来向pagecache申请。
 		size_t num = NumMoveSize(size);
-		size_t npage = num*size;
-
+		//对象越小，分配的页越少（对象越小，1页可切分的对象越多）
+		size_t npage = num*size;//对象个数*单个对象大小，这里算的是整体的字节大小
+		//字节大小转换成对应页数
 		npage >>= PAGE_SHIFT;
+		//至少给1页
 		if (npage == 0)
 			npage = 1;
 
