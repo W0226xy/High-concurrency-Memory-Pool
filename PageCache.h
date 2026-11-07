@@ -35,6 +35,7 @@ public:
 private:
 	SpanList _spanLists[NPAGES];
 
+	//记录页号和span的映射
 	std::unordered_map<PAGE_ID, Span*> _idSpanMap;
 
 	PageCache()

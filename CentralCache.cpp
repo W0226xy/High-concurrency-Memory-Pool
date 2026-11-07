@@ -119,15 +119,20 @@ size_t CentralCache::FetchRangeObj(void*& start, void*& end, size_t batchNum, si
 	return actualNum;
 }
 
+//threadcache还内存对象（一段以start为开头，大小size的自由链表）给centralcache
+//除了要确定这个自由链表要挂到哪个桶上，还需要确定这个自由链表的对象是属于centralcache中的哪个span
+//知道要还回来的内存对象地址，可以先算出属于哪个页，然后
 void CentralCache::ReleaseListToSpans(void* start, size_t size)
 {
-	size_t index = SizeClass::Index(size);
+	size_t index = SizeClass::Index(size);//算出桶号
 	_spanLists[index]._mtx.lock();
 	while (start)
 	{
 		void* next = NextObj(start);
 
+		//根据内存对象地址，算出对应的页号，然后查找页号对应的span
 		Span* span = PageCache::GetInstance()->MapObjectToSpan(start);
+		//把内存对象挂到span的自由链表上（头插）
 		NextObj(start) = span->_freeList;
 		span->_freeList = start;
 		span->_useCount--;

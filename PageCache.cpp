@@ -41,7 +41,8 @@ Span* PageCache::NewSpan(size_t k)
 
 			// 建立id和span的映射，方便central cache回收小块内存时，查找对应的span
 			for (PAGE_ID i = 0; i < kSpan->_n; ++i)
-			{
+			{	//建立要分配出去的页号和kspan的映射，方便central cache回收小块内存时，查找对应的span
+				//也就是分配出去的对应的页属于哪个span
 				_idSpanMap[kSpan->_pageId + i] = kSpan;
 			}
 
@@ -61,6 +62,7 @@ Span* PageCache::NewSpan(size_t k)
 	return NewSpan(k);
 }
 
+//根据内存对象地址，算出对应的页号，然后查找页号对应的span
 Span* PageCache::MapObjectToSpan(void* obj)
 {
 	PAGE_ID id = ((PAGE_ID)obj >> PAGE_SHIFT);

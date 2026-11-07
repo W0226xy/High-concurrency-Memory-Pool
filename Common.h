@@ -55,6 +55,8 @@ inline static void* SystemAlloc(size_t kpage)//kpage表示申请的页数，每�
 static void*& NextObj(void* obj)// 获取obj的下一个对象指针，返回对下一个对象指针的引用
 {//obj下一个对象指针在obj所占内存的起始位置，用来存储自由链表中下一个对象的地址
 	//32位系统下是4字节，64位系统下是8字节，保证每个空闲内存块至少能存储一个指针的大小
+	//ps：void*不能直接做 ++ 或 +1 因为 void 表示“未知类型”，编译器不知道它指向的对象大小，也就无法决定该移动多少字节。
+	//void* 主要适合“先保存一个通用地址”；需要访问、移动或做地址运算时，再转回具体指针类型。
 	return *(void**)obj;
 }
 
@@ -75,6 +77,7 @@ public:
 		++_size;
 	}
 
+	//头插入n个对象
 	void PushRange(void* start, void* end, size_t n)
 	{
 		NextObj(end) = _freeList;
@@ -83,6 +86,7 @@ public:
 		_size += n;
 	}
 
+	//取n个对象（头删）
 	void PopRange(void*& start, void*& end, size_t n)
 	{
 		assert(n <= _size);

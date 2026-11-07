@@ -69,5 +69,5 @@ void ThreadCache::ListTooLong(FreeList& list, size_t size)
 	void* end = nullptr;
 	list.PopRange(start, end, list.MaxSize());
 
-	CentralCache::GetInstance()->ReleaseListToSpans(start, size);
+	CentralCache::GetInstance()->ReleaseListToSpans(start, size);//从start位置取到最后，每个对象size大小。这条链表还给centralcache
 }
