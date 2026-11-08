@@ -117,6 +117,20 @@ void TestMultiThread()
 	t2.join();
 }
 
+//大于256k的内存申请分2种情况，256k/8k=32页
+//1.   32页<申请内存<128页，在pagecache进行切分
+//2.   申请内存>128页，向堆要
+void BigAlloc()
+{
+	void* p1=ConcurrentAlloc(257*1024);
+	ConcurrentFree(p1,257*1024);
+
+	void* p2=ConcurrentAlloc(129*8*1024);
+	ConcurrentFree(p2,129*8*1024);
+	
+}
+
+
 int main()
 {
 	//TestObjectPool();
@@ -125,7 +139,8 @@ int main()
 	//TestConcurrentAlloc1();
 	//TestAddressShift();
 
-	TestMultiThread();
+	//TestMultiThread();
+	BigAlloc();
 
 	return 0;
 }

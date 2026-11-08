@@ -31,6 +31,7 @@ Span* CentralCache::GetOneSpan(SpanList& list, size_t size)
 	PageCache::GetInstance()->_pageMtx.lock();
 	//NewSpan:获取一个k页的span。NumMovePage(size)计算size大小的对象，PageCache计算一次向系统获取几个页
 	Span* span = PageCache::GetInstance()->NewSpan(SizeClass::NumMovePage(size));
+	span->_isUse = true;//标记span正在使用中，防止其他线程去pagecache合并内存时把这个span合并掉。
 	PageCache::GetInstance()->_pageMtx.unlock();
 
 	// 对获取span进行切分，不需要加锁，因为这会其他线程访问不到这个span

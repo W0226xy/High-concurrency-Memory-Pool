@@ -52,6 +52,16 @@ inline static void* SystemAlloc(size_t kpage)//kpage表示申请的页数，每�
 	return ptr;
 }
 
+inline static void SystemFree(void* ptr)
+{
+#ifdef _WIN32
+	VirtualFree(ptr, 0, MEM_RELEASE);
+#else
+	// sbrk unmmap等
+#endif
+}
+
+
 static void*& NextObj(void* obj)// 获取obj的下一个对象指针，返回对下一个对象指针的引用
 {//obj下一个对象指针在obj所占内存的起始位置，用来存储自由链表中下一个对象的地址
 	//32位系统下是4字节，64位系统下是8字节，保证每个空闲内存块至少能存储一个指针的大小
@@ -228,10 +238,9 @@ public:
 		{
 			return _RoundUp(size, 8*1024);
 		}
-		else
+		else// size > 256 * 1024，以页为单位对齐,这里写成1<<PAGE_SHIFT是为了方便以后修改页大小，假设页大小改为16KB，只需要修改PAGE_SHIFT的值即可
 		{
-			assert(false);
-			return -1;
+			return _RoundUp(size, 1<<PAGE_SHIFT);
 		}
 	}
 
@@ -370,7 +379,7 @@ struct Span
 	size_t _useCount = 0; // 切好小块内存，被分配给thread cache的计数
 	void* _freeList = nullptr;  // 切好的小块内存的自由链表
 
-	bool _isUse = false;          // 是否在被使用
+	bool _isUse = false;          // 当前span是否在被使用（用于pagecache合并内存时判断）
 };
 
 // 带头双向循环链表 
