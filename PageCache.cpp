@@ -9,7 +9,8 @@ Span* PageCache::NewSpan(size_t k)
 	if(k>NPAGES-1)
 	{
 		void* ptr=SystemAlloc(k);
-		Span* span=new Span;
+		//Span* span=new Span;
+		Span* span = _spanPool.New();
 		span->_pageId=(PAGE_ID)ptr>>PAGE_SHIFT;
 		span->_n=k;
 		_idSpanMap[span->_pageId]=span;
@@ -33,7 +34,8 @@ Span* PageCache::NewSpan(size_t k)
 		if (!_spanLists[i].Empty())
 		{
 			Span* nSpan = _spanLists[i].PopFront();
-			Span* kSpan = new Span;
+			//Span* kSpan = new Span;
+			Span* kSpan = _spanPool.New();
 
 			// 在nSpan的头部切一个k页下来
 			// k页span返回给centracache
@@ -64,7 +66,8 @@ Span* PageCache::NewSpan(size_t k)
 	}
 
 	// 走到这个位置就说明后面没有大页的span了，一般是刚开始的时候，pagecache还没有从堆上申请过span，或者是page cache里面的span都被central cache分配完了
-	Span* bigSpan = new Span;
+	//Span* bigSpan = new Span;
+	Span* bigSpan = _spanPool.New();
 	// 这时就去找堆要一个128页的span，插入到128号桶
 	void* ptr = SystemAlloc(NPAGES - 1);
 	bigSpan->_pageId = (PAGE_ID)ptr >> PAGE_SHIFT;
@@ -79,7 +82,10 @@ Span* PageCache::NewSpan(size_t k)
 Span* PageCache::MapObjectToSpan(void* obj)
 {
 	PAGE_ID id = ((PAGE_ID)obj >> PAGE_SHIFT);
+
+	std::unique_lock<std::mutex> lock(_pageMtx);
 	auto ret = _idSpanMap.find(id);
+	
 	if (ret != _idSpanMap.end())
 	{
 		return ret->second;
@@ -98,7 +104,8 @@ void PageCache::ReleaseSpanToPageCache(Span* span)
 	{
 		void* ptr = (void*)(span->_pageId << PAGE_SHIFT);// span->_pageId是span的大块内存的起始页号，左移13位就是span的大块内存的起始地址
 		SystemFree(ptr);
-		delete span;
+		//delete span;
+		_spanPool.Delete(span);
 		return;
 	}
 
@@ -133,7 +140,8 @@ void PageCache::ReleaseSpanToPageCache(Span* span)
 		span->_n += prevSpan->_n;//合并完，前一个span的页数加上当前span的页数就是大块内存页数
 
 		_spanLists[prevSpan->_n].Erase(prevSpan);
-		delete prevSpan;
+		//delete prevSpan;
+		_spanPool.Delete(prevSpan);
 	}
 
 	// 向后合并
@@ -161,7 +169,8 @@ void PageCache::ReleaseSpanToPageCache(Span* span)
 		span->_n += nextSpan->_n;
 
 		_spanLists[nextSpan->_n].Erase(nextSpan);
-		delete nextSpan;
+		//delete nextSpan;
+		_spanPool.Delete(nextSpan);
 	}
 
 	// 合并完后，把span挂到pagecache对应页的桶上

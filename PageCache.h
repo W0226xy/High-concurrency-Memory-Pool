@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common.h"
-
+#include "Objectpool.h"
 class PageCache
 {
 public:
@@ -34,7 +34,7 @@ public:
 	
 private:
 	SpanList _spanLists[NPAGES];
-
+	ObjectPool<Span> _spanPool;//span对象池，避免频繁new和delete span对象，减少堆内存的碎片化
 	//记录页号和span的映射
 	std::unordered_map<PAGE_ID, Span*> _idSpanMap;
 

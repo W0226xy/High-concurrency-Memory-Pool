@@ -2,7 +2,7 @@
 #include "PageCache.h"
 #include "Common.h"
 #include "ThreadCache.h"
-
+#include "ObjectPool.h"
 static void* ConcurrentAlloc(size_t size)
 {
 	if(size>MAX_BYTES)
@@ -22,10 +22,12 @@ static void* ConcurrentAlloc(size_t size)
 	// 通过TLS 每个线程无锁的获取自己的专属的ThreadCache对象
 	if (pTLSThreadCache == nullptr)
 	{
-		pTLSThreadCache = new ThreadCache;
+		static ObjectPool<ThreadCache> _threadCachePool;
+		pTLSThreadCache = _threadCachePool.New();
+		//pTLSThreadCache = new ThreadCache;
 	}
 
-	cout << std::this_thread::get_id() << ":"<<pTLSThreadCache<<endl;
+	//cout << std::this_thread::get_id() << ":"<<pTLSThreadCache<<endl;
 
 	return pTLSThreadCache->Allocate(size);
 }
@@ -34,11 +36,10 @@ static void ConcurrentFree(void* ptr, size_t size)
 {
 	if(size>MAX_BYTES)
 	{
-
-		
-		PageCache::GetInstance()->_pageMtx.lock();
-		//根据内存对象地址，算出对应的页号，然后查找页号对应的span
+		//根据内存对象地址，算出对应的页号，
 		Span* span=PageCache::GetInstance()->MapObjectToSpan(ptr);
+		PageCache::GetInstance()->_pageMtx.lock();
+		//然后查找页号对应的span
 		PageCache::GetInstance()->ReleaseSpanToPageCache(span);
 		PageCache::GetInstance()->_pageMtx.unlock();
 		

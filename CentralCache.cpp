@@ -80,6 +80,7 @@ Span* CentralCache::GetOneSpan(SpanList& list, size_t size)
 		tail = NextObj(tail); 
 		start += size;
 	}
+	NextObj(tail)=nullptr;
 
 	// 切好span以后，需要把span挂到桶里面去的时候，再加锁
 	//切分过程中，这个新 span 尚未放入 CentralCache 桶，其他线程无法通过该桶找到它，所以切分本身不需要持有桶锁。切分完成后再加锁，把 span 插入链表头部，然后返回。
@@ -92,7 +93,9 @@ Span* CentralCache::GetOneSpan(SpanList& list, size_t size)
 // 从中心缓存获取一定数量的对象给thread cache
 size_t CentralCache::FetchRangeObj(void*& start, void*& end, size_t batchNum, size_t size)
 {
+	// 先找到对应大小的桶
 	size_t index = SizeClass::Index(size);
+	// 这里加锁是为了保护当前桶的访问，防止多个线程同时访问当前桶导致数据不一致的问题。
 	_spanLists[index]._mtx.lock();
 
 	Span* span = GetOneSpan(_spanLists[index], size);
